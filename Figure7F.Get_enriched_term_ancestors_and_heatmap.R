@@ -7,17 +7,18 @@ library(openxlsx)
 library(ComplexHeatmap)
 library(MatrixGenerics)
 library(circlize)
-#########读取OBO数据
+#########load go.obo file
+
 GO_infor<-get_OBO(
-  "../00.data/go.obo",
+  "/go.obo",###The file could be downloaded from https://geneontology.org/docs/download-ontology/
   #propagate_relationships = "is_a",
   extract_tags = "everything",
   merge_equivalent_terms = TRUE
 )
 
 
-##########加载富集结果
-tmp_enrichment.Workbook<-loadWorkbook("../00.data/862+13803.VS.NC.5.enrichment.xlsx")
+##########load enriched results
+tmp_enrichment.Workbook<-loadWorkbook("/862+13803.VS.NC.5.enrichment.xlsx")
 prefix="862+13803.VS.NC.5.enrichment"
 tmp_enrichment<-list()
 for(i in names(tmp_enrichment.Workbook)){
@@ -47,7 +48,7 @@ for(k in names(tmp_enrichment)){
 }
 
 
-##########提取不同cluster富集结果的p value
+##########get P value of all terms in each cluster
 p.value.df<-data.frame(matrix(data=NA,nrow=length(tmp_gene_set_name),ncol = 5))
 rownames(p.value.df)<-tmp_gene_set_name
 colnames(p.value.df)<-c("Cluster.1","Cluster.2","Cluster.3","Cluster.4","Cluster.5"   )
@@ -63,7 +64,7 @@ p.adj.df[is.na(p.adj.df)]=1
 q.value.df[is.na(q.value.df)]=1
 tmp_p.value.df<-t(scale(t(log(p.value.df))))
 
-############绘制heatmap
+############conducting term p-value based clustring to find out cluster-specific go terms
 col_fun = colorRamp2(c(max(tmp_p.value.df),max(tmp_p.value.df)*3/5,max(tmp_p.value.df)*1/4,0,1/4*min(tmp_p.value.df),3/5*min(tmp_p.value.df),min(tmp_p.value.df)), c("#0088C3","#6FBCDB","#BCE5F1","#f3f3f3","#FFC482","#FF7B4C","#FF5831") )
 
 enrichment_heatmap<-Heatmap(tmp_p.value.df,
@@ -83,7 +84,7 @@ dev.off()
 
 
 
-############提取不同cluster的词条以及p value
+############get clustered terms and their ancestor terms
 
 enrichment_heatmap1 <- draw(enrichment_heatmap)
 
@@ -140,7 +141,7 @@ for(tmp_cluster in names(name_of_each_cluster_enrichment)){
   
   
   
-  #######term of first level in GO BP 
+  #######get ancestor terms of first level in GO tree
   first_level<-c("GO:0044848","GO:0044419","GO:0051703","GO:0065007","GO:0009987","GO:0098754","GO:0032502","GO:0040007","GO:0042592","GO:0002376","GO:0051179","GO:0040011","GO:0008152","GO:0032501","GO:0043473","GO:0000003","GO:0022414","GO:0050896","GO:0048511","GO:0023052","GO:0016032")
   first_level<-intersect(first_level,colnames(tmp_ancestors.df))
   plot.scaled_p.first.df<-data.frame(matrix(data=NA,nrow=0,ncol=3))
